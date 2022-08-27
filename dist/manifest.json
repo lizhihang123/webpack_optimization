@@ -1,0 +1,1 @@
+{"name":"vue_dll","content":{"./node_modules/vue-router/dist/vue-router.esm.js":{"id":"./node_modules/vue-router/dist/vue-router.esm.js","buildMeta":{"exportsType":"namespace"},"exports":["default"]},"./node_modules/vue/dist/vue.js":{"id":"./node_modules/vue/dist/vue.js","buildMeta":{}}}}

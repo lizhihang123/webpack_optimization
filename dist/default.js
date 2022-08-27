@@ -1,0 +1,2 @@
+/*! For license information please see default.js.LICENSE.txt */
+(self.webpackChunk=self.webpackChunk||[]).push([[913],{138:(e,t,o)=>{"use strict";var u=o(454),s=o.n(u),a=o(994);const p=new a.default({routes:[{path:"/home",component:{template:"<h2>我是home</h2>"}},{path:"/about",component:{template:"<h2>我是about</h2>"}}]});s().use(a.default),new(s())({router:p,el:"#app",data:{msg:"你好呀，小哥哥"}})},994:(e,t,o)=>{e.exports=o(479)("./node_modules/vue-router/dist/vue-router.esm.js")},454:(e,t,o)=>{e.exports=o(479)("./node_modules/vue/dist/vue.js")}}]);
