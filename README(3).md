@@ -1426,7 +1426,7 @@ output: {
    - [webpack-bundle-analyzer](https://github.com/webpack-contrib/webpack-bundle-analyzer)
    - [webpack bundle optimize helper](https://webpack.jakoblind.no/optimize)
 
-   其中webpack-bundle-analyzer是一个插件，可以以插件的方式安装到项目中
+   其中`webpack-bundle-analyzer`是一个插件，可以以插件的方式安装到项目中
 
 ## Prefetching和Preloading
 

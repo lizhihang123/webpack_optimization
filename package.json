@@ -1,5 +1,6 @@
 {
   "devDependencies": {
+    "add-asset-html-webpack-plugin": "^5.0.2",
     "assert": "^2.0.0",
     "autoprefixer": "^10.4.8",
     "clean-webpack-plugin": "^4.0.0",
@@ -24,6 +25,7 @@
     "terser-webpack-plugin": "^5.3.5",
     "url-loader": "^4.1.1",
     "webpack": "^5.74.0",
+    "webpack-bundle-analyzer": "^4.6.1",
     "webpack-cli": "^4.10.0",
     "webpack-dev-middleware": "^5.3.3",
     "webpack-dev-server": "^4.10.0",
@@ -37,7 +39,8 @@
     "build:vue": "webpack-cli --config ./build/webpack.vue.js",
     "build": "webpack-cli --config ./build/webpack.prod.js",
     "dev-build": "webpack-dev-server --config ./build/webpack.prod.js",
-    "start": "live-server ./dist"
+    "start": "live-server ./dist",
+    "analysis": "webpack-cli --config ./build/webpack.analysis.js --progress"
   },
   "dependencies": {
     "@babel/core": "^7.18.10",

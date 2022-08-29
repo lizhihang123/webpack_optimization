@@ -519,6 +519,14 @@ module.exports = merge(baseConfig, {
 
 
 
+### 路由懒加载的原理：
+
+1. 就是把组件切分到不同的js，
+2. 切换到对应的路由，才加载对应的js文件
+3. 首页第一次不会加载太多内容
+
+
+
 
 
 ### 7.2 理解代码分割的重要性
@@ -1152,13 +1160,96 @@ noParse: 不能忽略moment。
 
 ### 7.12 DllPlugin插件的使用
 
-作用：对于vue/react等这样大型的框架，框架本身不怎么变化，或者框架更新了，但是我们项目没有要求更新vue的版本。每次打包，vue都是会重新打包的，这样对于`打包速度`影响非常大会很慢，但是使用DllPlugin插件，能够把他们放到`一个动态链接库`,这样vue包第一次打包好了以后，后续几乎就不用动了，能够极大提升构建速度
+作用：对于vue/react等这样大型的框架，框架本身不怎么变化，或者框架更新了，但是我们项目没有要求更新vue的版本。每次打包，vue都是会重新打包的，这样对于`打包速度`影响非常大会很慢，即使用`代码分割`,它们每次至少会加载一次。
+
+而使用DllPlugin插件，能够把他们放到`一个动态链接库`,这样vue包第一次打包好了以后，后续几乎就不用动了，能够极大提升构建速度。
+
+
+
+全部代码：
+
+webpack.vue.js
+
+```js
+// 专门给vue文件 生成动态链接库 使用
+const path = require('path')
+const webpack = require('webpack')
+module.exports = {
+    mode: 'development',
+    entry: {
+        vue: [
+            'vue/dist/vue.js',
+            'vue-router'
+        ]
+    },
+    output: {
+        filename: '[name]_dll.js',
+        path: path.resolve(__dirname, '../public'),
+        library: '[name]_dll'
+    },
+    plugins: [
+        new webpack.DllPlugin({
+            context: __dirname,
+            name: '[name]_dll',
+            path: path.resolve(__dirname, '../public/manifest.json')
+        })
+    ]
+}
+```
+
+
+
+
+
+webpack.base.js
+
+```js
+        new webpack.DllReferencePlugin({
+            context: __dirname,
+            manifest: path.resolve(__dirname, '../public/manifest.json')
+        })
+```
+
+
+
+
+
+package.json配置
+
+```diff
+  "scripts": {
+    "build2": "webpack-cli",
+    "dev2": "webpack-dev-server --hot --port 8080 --open",
+    "serve": "node server.js",
+    "dev": "webpack-dev-server --config ./build/webpack.dev.js",
++    "build:vue": "webpack-cli --config ./build/webpack.vue.js",
+    "build": "webpack-cli --config ./build/webpack.prod.js",
+    "dev-build": "webpack-dev-server --config ./build/webpack.prod.js",
+    "start": "live-server ./dist"
+  },
+```
+
+
+
+
+
+执行 yarn build:vue
+
+
+
+![image-20220829084758991](https://xingqiu-tuchuang-1256524210.cos.ap-shanghai.myqcloud.com/4575/image-20220829084758991.png)
+
+
+
+
+
+
+
+
+
+
 
 操作如下：
-
-
-
-
 
 1. 在项目中，引入vue vue-router
 
@@ -1166,7 +1257,7 @@ noParse: 不能忽略moment。
 
 ![image-20220827175621435](https://xingqiu-tuchuang-1256524210.cos.ap-shanghai.myqcloud.com/4575/image-20220827175621435.png)
 
-把vue安装到了2.7.10版本，没有了
+把vue安装到了2.7.10版本，没有了这个错误
 
 
 
@@ -1242,9 +1333,7 @@ module.exports = {
     },
 ```
 
-添加出口，
-
-path指定出口在dist目录
+引用path、webpack，添加出口，path指定出口在dist目录
 
 filename指定文件名，利用placeholder语法
 
@@ -1268,7 +1357,7 @@ module.exports = {
 
 
 
-引用path、webpack
+
 
 使用内置插件，
 
@@ -1295,7 +1384,8 @@ module.exports = {
 +    plugins: [
 +        new webpack.DllPlugin({
 +            name: '[name]_dll',
-+            path: path.resolve(__dirname, '../dist/manifest.json')
+// 单独放在public文件夹，不和 dist放在一起
++            path: path.resolve(__dirname, '../public/manifest.json')
         })
     ]
 }
@@ -1315,11 +1405,11 @@ module.exports = {
 
 在webpack.base.json文件里面使用,
 
-这个插件的意思是，
+这个插件的意思是，找到`清单文件`，这样就能够和`vue_dll.js`建立联系
 
 ```diff
 new webpack.DllReferencePlugin({
-    manifest: path.resolve(__dirname, '../dist/manifest.json')
+    manifest: path.resolve(__dirname, '../public/manifest.json')
 })
 ```
 
@@ -1343,7 +1433,7 @@ ps:
 
 我们再次yarn build
 
-发现打包速度显著提升了
+发现打包速度显著提升了， 从 6s变成了1s
 
 ![image-20220827182807977](https://xingqiu-tuchuang-1256524210.cos.ap-shanghai.myqcloud.com/4575/image-20220827182807977.png)
 
@@ -1359,12 +1449,12 @@ ps:
 
 
 
-此时，我们修改一个配置
+此时，我们修改一个配置。
 
 ```diff
     output: {
         filename: '[name]_dll.js',
-        path: path.resolve(__dirname, '../dist'),
+        path: path.resolve(__dirname, '../public'),
 +        library: '[name]_dll'
     },
 ```
@@ -1373,11 +1463,305 @@ ps:
 
 我们启动 yarn build:vue来修改 vue_dll.js和 manifest.json文件
 
-
-
 再次启动项目，用live-serve或者是yarn serve都行，发现还是同样的错误
 
 
 
-这个问题没能够解决
+这个问题破案了：
 
+原因就是因为src/index.html里面有没有引入vue_dll.js，并且是直接如下
+
+```js
+<script src="vue_dll.js"></script>
+```
+
+如果你引入的是,就会报错
+
+```js
+<script src="../public/vue_dll.js"></script>
+```
+
+比如,当报错找不到 vue_dll.js时，就去地址栏敲一下，/public,发现没有，去掉public呢？发现有了
+
+<img src="https://xingqiu-tuchuang-1256524210.cos.ap-shanghai.myqcloud.com/4575/image-20220829084146455.png" alt="image-20220829084146455" style="zoom:50%;" />
+
+<img src="https://xingqiu-tuchuang-1256524210.cos.ap-shanghai.myqcloud.com/4575/image-20220829084127932.png" alt="image-20220829084127932" style="zoom:50%;" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+其他报错,如果node src/index.js，如果报错：
+
+![image-20220829082845537](https://xingqiu-tuchuang-1256524210.cos.ap-shanghai.myqcloud.com/4575/image-20220829082845537.png)
+
+就去package.json里面设置"type": "module",但是这样也有问题，就不能用__dirname这样的语法了
+
+
+
+package.json里面设置了 "type": "module"
+
+就不能用require语法。
+
+![image-20220829082657710](https://xingqiu-tuchuang-1256524210.cos.ap-shanghai.myqcloud.com/4575/image-20220829082657710.png)
+
+测出了，下面两个效果是一样的,当前文件在哪个目录，__dirname获取的就是哪个目录
+
+```diff
+const path = require('path')
+console.log(path.resolve(__dirname, './dist'));
+console.log(path.join(__dirname, './dist'));
+```
+
+![image-20220829082823961](https://xingqiu-tuchuang-1256524210.cos.ap-shanghai.myqcloud.com/4575/image-20220829082823961.png)
+
+
+
+
+
+
+
+### 7.13 add-asset-html-webpack-plugin
+
+>这个插件，能够自动的办公我们去引入打包好的js资源文件，比如vue_dll.js文件，就不需要我们手动去index.html里面引入 -> yarn build，不需要
+
+```js
+new AddAssetHtmlPlugin({
+    filepath: path.resolve(__dirname, '../public/vue_dll.js')
+}),
+```
+
+
+
+注释index.html里面对于vue_dll.js的手动引入
+
+
+
+yarn build重新打包，查看dist里面有没有帮我们自动引入
+
+有，而且帮我们放在了index.js之前
+
+
+
+yarn start执行
+
+
+
+
+
+发现js在根目录下面
+
+![image-20220829091336984](https://xingqiu-tuchuang-1256524210.cos.ap-shanghai.myqcloud.com/4575/image-20220829091336984.png)
+
+
+
+小结：
+
+1. DllPlugin - vue - 生成 vue_dll.js和 manifest.json文件；library暴露全局变量 vue_dll
+2. DllReferencePlugin - base - 打包时，要找到manifest.json，做映射，然后用的时候能够指向他
+3. add-asset-html-plugin - 放在 base - 自动帮我们引入动态链接库，必须在html-webpack-plugin之前
+
+
+
+### 7.14 happypack
+
+了解历史即可，
+
+webpack在node环境下面打包，node是单线程打包的，以前打包大型项目，速度很慢。happy可以开启很多个子进程，进行打包。
+
+但是现在webpack打包，不需要happypack，也可以速度很快了。webpack4已经很快速度
+
+主要是用于打包js文件。
+
+
+
+
+
+
+
+### 7.15 浏览器缓存
+
+main.js里面的内容修改 -> 重新打包 -> liver server 不会帮我们利用缓存
+
+main.js里面的内容修改 -> 重新打包 -> 放到apache 服务器上 -> 刷新页面 -> 如果是4.5的版本，就会帮我们判断资源更新，就不利用缓存。/ 再低一些的版本，就不会判断资源是否更新了
+
+
+
+webpack.base.js文件，添加hash值，这样index.js文件名变了，服务器能够感受到
+
+```diff
+    output: {
+        path: path.join(__dirname, '..' ,'./dist'),
+        // 2. 多入口无法对应一个固定的出口，所以修改filename为[name]变量
++        // filename: '[name].[contenthash:8].js',
+        filename: '[name].js',
+        publicPath: '/'
+    },
+```
+
+hash 
+
+contentHash
+
+chunk有什么区别
+
+>https://juejin.cn/post/7109867165527834632#heading-2
+
+
+
+>https://juejin.cn/post/6844903633708908551#heading-7
+
+
+
+
+
+
+
+### 7.16 覆盖率的概念
+
+
+
+  覆盖率，是网页的加载的资源，有多少是真正的使用的。这么多css代码，有多少是真正用到的。
+
+  覆盖率越高，会越好。多余的代码就越少。但是加载一些没必要的代码有时，是不可避免的。
+
+
+
+  在控制台，more Tools搜索Coverage，按住红点，刷新
+
+京东
+
+![image-20220829132737439](https://xingqiu-tuchuang-1256524210.cos.ap-shanghai.myqcloud.com/4575/image-20220829132737439.png)
+
+
+
+淘宝：
+
+![image-20220829132729036](https://xingqiu-tuchuang-1256524210.cos.ap-shanghai.myqcloud.com/4575/image-20220829132729036.png)
+
+
+
+1. 先看体积，淘宝加载的是1.4MB资源，好像更多，更差一些
+2. 尽管淘宝的，覆盖率有73%
+
+
+
+
+
+>https://juejin.cn/post/7035951233907032077 项目性能优化
+
+
+
+
+
+### 7.17 prefetch
+
+就是在父模块加载完成后，再去加载子模块。不是说等到点击按钮，再去加载对应的模块，而是父模块加载完，就会去执行“可能会用到的模块”
+
+
+
+假设有一个登录按钮，点击，会弹出登录的弹框，如果说这个里面用了很多第三方包，我们这时，异步加载他，可能会出现卡顿。 => 一个小包，也可能会有问题
+
+
+
+因此：
+
+1. 我们不希望，首屏加载 太长时间，也就是刚进来，不能加载太多内容，
+2. 也不希望点击某个小模块，也加载半天
+3. 就通过，首屏加载 结束 -> 点击某个小模块之间的时间，自主的加载这个包。然后你一点击这个 按钮，飞快的弹出来你要的包 “其实他之前已经加载好了”
+
+
+
+
+
+页面一进入，慢慢的也会加载这个文件。后面使用时比如点击按钮时，用的是`prefetch cache`
+
+![image-20220829151840832](https://xingqiu-tuchuang-1256524210.cos.ap-shanghai.myqcloud.com/4575/image-20220829151840832.png)
+
+
+
+
+
+### 7.18 打包去掉console语句
+
+目标：1. 开发环境，我们希望控制台没有console的语句
+
+如何一套代码，区分开发环境和生产环境呢？
+
+
+
+1. 知道知识点，webpack内置两个文件, .env.production 和 .env.development
+2. 里面有变量process
+3. 我们能够在两个文件里面配置变量，会自动挂载到process身上
+4. 注意点，改配置文件，一定得重启，才会生效
+
+
+
+
+
+utils/console.log
+
+这里判断，只要不是开发环境，就让他的console的函数清空
+
+```js
+if (process.env.NODE_ENV !== 'development') {
+  console.log = () => {}
+  console.dir = () => {}
+  console.warning = () => {}
+  console.error = () => {}
+}
+```
+
+
+
+
+
+
+
+### bug
+
+为什么使用了dll，每次打包 yarn build 还是会把vue_dll单独打包一份？
+
+vue引入时：
+
+```diff
+import Vue from 'vue/dist/vue' // 这样是完全版本的vue 如果直接 import vue from 'vue' 引入的是运行时的vue 不支持
+```
+
+
+
+vue排除时：
+
+使用时，原来写的都是vue.js,就报错，去掉后缀，就好了
+
+```diff
+module.exports = {
+    mode: 'development',
+    entry: {
+        vue: [
+            'vue/dist/vue',
+            'vue-router'
+        ]
+```
+
+
+
+还是不行，这个问题先放一放
+
+
+
+
+
+>小结：
+>
+>1. 黑马头条项目使用了 console优化了一下。
+>2. 首页加载 和 小兔鲜，都很慢。可以考虑分析哪个包最大，cdn引入一下
+>3. 构建速度，注意dll noparse ignore的使用。 小兔鲜 prefetch的使用

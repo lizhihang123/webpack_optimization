@@ -8,11 +8,12 @@
     <title>Document</title>
     <!-- <script src="./dist/bundle.js"></script> -->
     <!-- <script src="bundle.js"></script> -->
+    <!-- <script src="vue_dll.js"></script> -->
 </head>
 
 <body>
     <div id="app">
-        <span v-text="msg"></span>
+        <!-- <span v-text="msg"></span> -->
         <router-link to="/home">点击回家</router-link>
         <router-link to="/about">点击跳转到关于</router-link>
         <router-view></router-view>
@@ -26,6 +27,7 @@
             555
         </li>
     </ul>
+    <button id="btn">动态导入</button>
     <script>
     </script>
 </body>

@@ -5,14 +5,17 @@ const CopyWebpackPlugin = require('copy-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const TerserJSPlugin = require('terser-webpack-plugin')
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin')
+const AddAssetHtmlPlugin = require('add-asset-html-webpack-plugin');
 const webpack = require('webpack')
+const dllPath = '../public/vendor'
 module.exports = {
     entry: {
         index: './src/index.js',
     },
     output: {
-        path: path.join(__dirname, '..' ,'./dist'),
+        path: path.join(__dirname, '../dist'),
         // 2. 多入口无法对应一个固定的出口，所以修改filename为[name]变量
+        // filename: '[name].[contenthash:8].js',
         filename: '[name].js',
         publicPath: '/'
     },
@@ -56,8 +59,13 @@ module.exports = {
             template: './src/index.html',
             chunks: ['index']
         }),
+        new AddAssetHtmlPlugin({
+            filepath: path.resolve(__dirname, dllPath, 'vue_dll.js')
+        }),
+        // 10. 自动引入vue_dll.js
+        
         // 3. 打包前 清除dist目录里的内容
-        // new CleanWebpackPlugin(),
+        new CleanWebpackPlugin(),
         // 4. 拷贝文件 到dist目录下面
         new CopyWebpackPlugin({
             patterns: [
@@ -90,7 +98,7 @@ module.exports = {
             resourceRegExp: /\.\/locale/, 
             contextRegExp: /moment/}),
         new webpack.DllReferencePlugin({
-            manifest: path.resolve(__dirname, '../dist/manifest.json')
+            manifest: path.resolve(__dirname, dllPath, 'manifest.json')
         })
     ],
     module: {
