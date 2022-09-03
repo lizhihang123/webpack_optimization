@@ -1,3 +1,35 @@
+目录：
+
+```diff
+1. tree-shaking
+2. scope-hoisting
+3. 代码压缩
+4. css代码抽离
+5. css代码添加前缀
+6. css代码压缩
+7. js代码分割
+	7.1 代码分割的概念 - 路由懒加载的原理
+	7.2 理解代码分割的重要性
+	7.3 splitChunks
+	7.4 runtimeChunk
+	7.5 静态导入
+	7.6 动态导入
+	7.7 splitChunks
+	7.8 splitChunksPlugin
+	7.9 noParse
+	7.10 ignorePlugin
+	7.11 DllPlugin插件
+	7.12 DllPlugin插件的使用
+	7.13 add-asset-html-webpack-plugin
+	7.14 happypack
+	7.15 浏览器缓存
+	7.16 覆盖率的概念
+	7.17 prefetch
+	7.18 去掉console语句
+```
+
+
+
 # webpack 优化部分【重要】
 
 ## 1. tree-shaking

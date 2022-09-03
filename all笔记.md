@@ -1481,7 +1481,26 @@ function getComponent() {
 
 4. 通过`npm link`链接到全局包中，供本地测试使用
 
+
+
+1. bin目录是干嘛用的
+2. bin脚本怎么执行
+3. npm link是干嘛用的
+
 ## 分析webpack打包的bundle文件
+
+_webpack_require_函数的作用是什么？
+
+1. 为什么要缓存
+2. 缓存对象是干嘛用的
+3. 里面的i l exports是干嘛用的
+4. modules[moduleId]是一个函数，调用，this指向 module.exports,后面三个参数分别是什么意思
+5. module.l = true是什么意思？
+6. return module.export是干嘛用的
+
+
+
+下面又有三个函数自调用是干嘛用的
 
 其内部就是自己实现了一个`__webpack_require__`函数，递归导入依赖关系
 
